@@ -7,20 +7,21 @@ import unicodedata
 from shlex import quote
 
 import imgkit
+from security import safe_command
 
 
 def download_arxiv_pdf(arxiv_id: str, tmp_dir: str):
     dir = quote(tmp_dir)
     output = quote(f"{arxiv_id}.pdf")
     url = quote(f"https://arxiv.org/pdf/{arxiv_id}.pdf")
-    result = subprocess.run(f"aria2c -q -x5 -k1M -d {dir} -o {output} {url}", shell=True)
+    result = safe_command.run(subprocess.run, f"aria2c -q -x5 -k1M -d {dir} -o {output} {url}", shell=True)
     assert result.returncode == 0  # TODO
     return os.path.join(tmp_dir, f"{arxiv_id}.pdf")
 
 
 def pdf_to_png(pdf_filename: str):
     filename = quote(pdf_filename)
-    result = subprocess.run(f"pdftoppm -q -png -singlefile -scale-to-x 1200 -scale-to-y -1 {filename} {filename}", shell=True)
+    result = safe_command.run(subprocess.run, f"pdftoppm -q -png -singlefile -scale-to-x 1200 -scale-to-y -1 {filename} {filename}", shell=True)
     assert result.returncode == 0  # TODO
     return f"{pdf_filename}.png"
 
