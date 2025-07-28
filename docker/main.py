@@ -22,11 +22,11 @@ import postslack
 import posttwitter
 import praw
 import pysbd
-import requests
 import slack_sdk
 import tweepy
 from bs4 import BeautifulSoup, Tag
 from google.cloud import storage
+from security import safe_requests
 
 
 # https://info.arxiv.org/help/arxiv_identifier.html
@@ -86,7 +86,7 @@ def search_hackernews(query: str, attribute="", days=0, limit: int | None = None
         days_ago = int((datetime.now() - timedelta(days=days)).timestamp())
         params.update({"numericFilters": f"created_at_i>{days_ago}"})
     params.update({"hitsPerPage": str(limit)}) if limit else None
-    response = requests.get("https://hn.algolia.com/api/v1/search", params=params)
+    response = safe_requests.get("https://hn.algolia.com/api/v1/search", params=params)
     json = response.json()
     return pd.json_normalize([hit_to_dict(hit) for hit in json["hits"]])
 
@@ -113,7 +113,7 @@ def article_to_dict(article: Tag, created_at: float):
 def scrape_huggingface(timestamp: float, wait: int = 1):
     """https://huggingface.co/papers"""
     date = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
-    response = requests.get(f"https://huggingface.co/papers?date={date}")
+    response = safe_requests.get(f"https://huggingface.co/papers?date={date}")
     soup = BeautifulSoup(response.text, "html.parser")
     articles = soup.select("article")
     result = [article_to_dict(article, timestamp) for article in articles]
